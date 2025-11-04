@@ -1,13 +1,13 @@
 FROM python:3.11-slim
 
-# Dossier de travail dans le conteneur
+# Dossier de travail
 WORKDIR /app
 
-# Copier le backend complet et le requirements.txt
+# Copier le backend et les dépendances
 COPY backend ./backend
 COPY requirements.txt .
 
-# Installer les dépendances système et Python
+# Installer dépendances système + Python
 RUN apt-get update && apt-get install -y --no-install-recommends gcc && \
     pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
@@ -16,12 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc && \
 # Variables d'environnement
 ENV OPENAI_API_BASE_URL=http://litellm:4000
 ENV OPENAI_API_KEY="fake-key"
-
-# Pour que Python trouve le module open_webui
 ENV PYTHONPATH=/app/backend
 
-# Exposer le port du backend
 EXPOSE 8080
 
-# Lancer le vrai module Python (le package open_webui)
-CMD ["python", "-m", "open_webui"]
+# ✅ Démarre l'app FastAPI (sans avoir besoin de __main__.py)
+CMD ["python", "backend/open_webui/main.py"]
