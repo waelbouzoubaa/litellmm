@@ -1,41 +1,49 @@
-# ==========================
-# Étape 1 : Build du frontend
-# ==========================
+# ===============================
+# ÉTAPE 1 : Build du frontend
+# ===============================
 FROM node:22-alpine AS frontend-builder
 
-WORKDIR /app
+WORKDIR /app/openwebui
 
-# 👇 Copie le dossier openwebui (ton frontend réel)
-COPY ./openwebui /app/openwebui
+# Copier les fichiers nécessaires du frontend
+COPY ./openwebui/package*.json ./
+RUN npm ci --legacy-peer-deps
 
-RUN cd /app/openwebui && npm ci && npm run build
+COPY ./openwebui ./
+RUN npm run build
 
-# ==========================
-# Étape 2 : Backend Python
-# ==========================
+
+# ===============================
+# ÉTAPE 2 : Backend Python (FastAPI)
+# ===============================
 FROM python:3.11-slim
 
 WORKDIR /app
 
+# Copier le backend et requirements
 COPY ./backend ./backend
 COPY ./requirements.txt .
 
-# 👇 Copie le build du frontend dans le dossier /app/build
+# Copier le build du frontend
 COPY --from=frontend-builder /app/openwebui/build ./build
 
+# Installer les dépendances système et Python
 RUN apt-get update && apt-get install -y --no-install-recommends gcc ffmpeg && \
     pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     apt-get remove -y gcc && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
+# Variables d’environnement
 ENV OPENAI_API_BASE_URL=http://litellm:4000
 ENV OPENAI_API_KEY="fake-key"
 ENV PYTHONPATH=/app/backend
 ENV PORT=8080
 
-EXPOSE 8080
-
+# Préparer la base de données
 RUN mkdir -p backend/data && chmod 777 backend/data
 RUN touch backend/open_webui/CHANGELOG.md
 
+EXPOSE 8080
+
+# Commande de démarrage
 CMD ["python", "backend/open_webui/main.py"]
