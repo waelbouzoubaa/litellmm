@@ -20,8 +20,11 @@ ENV PYTHONPATH=/app/backend
 
 EXPOSE 8080
 
-# Juste avant le CMD dans ton Dockerfile
+# ✅ Créer le dossier base de données et donner les droits
+RUN mkdir -p backend/data && chmod 777 backend/data
+
+# ✅ Créer un changelog vide pour éviter l’erreur du fichier manquant
 RUN touch backend/open_webui/CHANGELOG.md
 
-# ✅ Démarre l'app FastAPI (sans avoir besoin de __main__.py)
+# ✅ Démarre l'app FastAPI
 CMD ["python", "backend/open_webui/main.py"]
