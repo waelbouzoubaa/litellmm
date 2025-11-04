@@ -4,10 +4,11 @@
 FROM node:22-alpine AS frontend-builder
 
 WORKDIR /app
-COPY openwebui ./openwebui
 
-# Installation et build du frontend
-RUN cd openwebui && npm ci && npm run build
+# 👇 Copie le dossier openwebui (ton frontend réel)
+COPY ./openwebui /app/openwebui
+
+RUN cd /app/openwebui && npm ci && npm run build
 
 # ==========================
 # Étape 2 : Backend Python
@@ -15,10 +16,11 @@ RUN cd openwebui && npm ci && npm run build
 FROM python:3.11-slim
 
 WORKDIR /app
-COPY backend ./backend
-COPY requirements.txt .
 
-# Copie du build frontend depuis la première étape
+COPY ./backend ./backend
+COPY ./requirements.txt .
+
+# 👇 Copie le build du frontend dans le dossier /app/build
 COPY --from=frontend-builder /app/openwebui/build ./build
 
 RUN apt-get update && apt-get install -y --no-install-recommends gcc ffmpeg && \
