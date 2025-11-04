@@ -20,5 +20,8 @@ ENV PYTHONPATH=/app/backend
 
 EXPOSE 8080
 
+# Juste avant le CMD dans ton Dockerfile
+RUN touch backend/open_webui/CHANGELOG.md
+
 # ✅ Démarre l'app FastAPI (sans avoir besoin de __main__.py)
 CMD ["python", "backend/open_webui/main.py"]
