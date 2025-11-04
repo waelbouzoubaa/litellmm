@@ -1,0 +1,25 @@
+# ===============================
+# Stack Open WebUI + LiteLLM
+# ===============================
+
+version: '3.8'
+
+services:
+  litellm:
+    build: ./litellm
+    container_name: litellm
+    ports:
+      - "4000:4000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+
+  openwebui:
+    build: ./openwebui
+    container_name: openwebui
+    ports:
+      - "3000:8080"
+    depends_on:
+      - litellm
+    environment:
+      - OPENAI_API_BASE_URL=http://litellm:4000
