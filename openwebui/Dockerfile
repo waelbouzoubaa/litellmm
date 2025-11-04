@@ -2,16 +2,24 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copier uniquement le code backend (car c’est lui qu’on exécute)
+# Copier le code complet du backend
 COPY backend ./backend
-COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Copier les dépendances
+COPY backend/requirements.txt .
 
+# Installer les dépendances système et Python
+RUN apt-get update && apt-get install -y --no-install-recommends gcc && \
+    pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apt-get remove -y gcc && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+# Config d'environnement
 ENV OPENAI_API_BASE_URL=http://litellm:4000
 ENV OPENAI_API_KEY="fake-key"
+ENV PYTHONPATH=/app/backend
 
 EXPOSE 8080
 
-# Lancer le backend principal
-CMD ["python", "-m", "backend.app"]
+# Lancer le vrai module Python
+CMD ["python", "-m", "open_webui"]
