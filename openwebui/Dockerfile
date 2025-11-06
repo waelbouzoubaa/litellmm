@@ -1,17 +1,25 @@
+# ---------- STAGE 1 : Build du frontend ----------
+FROM node:18 AS frontend
+WORKDIR /app
+COPY package*.json ./
+COPY vite.config.ts svelte.config.js tailwind.config.js postcss.config.js ./
+COPY src ./src
+COPY static ./static
+RUN npm install && npm run build
+
+# ---------- STAGE 2 : Backend ----------
 FROM python:3.11-slim
 
-# Dossier de travail
 WORKDIR /app
-
-# Copier le backend et les dépendances
 COPY backend ./backend
-COPY requirements.txt .
-
-# Installer dépendances système + Python
+COPY requirements.txt ./
 RUN apt-get update && apt-get install -y --no-install-recommends gcc && \
     pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     apt-get remove -y gcc && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+# Copier le build frontend compilé
+COPY --from=frontend /app/build ./build
 
 # Variables d'environnement
 ENV OPENAI_API_BASE_URL=http://litellm:4000
@@ -20,11 +28,7 @@ ENV PYTHONPATH=/app/backend
 
 EXPOSE 8080
 
-# ✅ Créer le dossier base de données et donner les droits
 RUN mkdir -p backend/data && chmod 777 backend/data
-
-# ✅ Créer un changelog vide pour éviter l’erreur du fichier manquant
 RUN touch backend/open_webui/CHANGELOG.md
 
-# ✅ Démarre l'app FastAPI
 CMD ["python", "backend/open_webui/main.py"]
